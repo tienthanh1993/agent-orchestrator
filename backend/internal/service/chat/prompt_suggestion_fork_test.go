@@ -110,7 +110,7 @@ func TestPromptSuggestionForkUsesNativeContextAndStaysInvisible(t *testing.T) {
 				if source != parent.ProviderConversationID() || anchor != wantAnchor {
 					t.Fatalf("source/anchor=%q/%q", source, anchor)
 				}
-				if cfg.SessionID == testSession || !cfg.ReadOnly || !cfg.DisableNetwork || cfg.Ephemeral || !cfg.ProviderIDsScoped || cfg.Model != "parent-model" || cfg.Effort != "" || cfg.Permissions != ports.PermissionModeAcceptEdits {
+				if cfg.SessionID == testSession || !cfg.ReadOnly || !cfg.DisableNetwork || cfg.Ephemeral || !cfg.ProviderIDsScoped || cfg.Model != "parent-model" || cfg.Effort != "xhigh" || cfg.Permissions != ports.PermissionModeAcceptEdits {
 					t.Fatalf("unsafe or incorrect child config: %+v", cfg)
 				}
 				if capability == ports.ChatCapabilityForkCurrent {
@@ -281,7 +281,7 @@ func TestPromptSuggestionForkFallsBackWhenNativeCapabilityIsMissing(t *testing.T
 		return newSuggestionChild(), nil
 	}
 	answer, err := h.svc.RunPromptSuggestionTask(t.Context(), testSession, turnID, domain.HarnessCursor, suggestionForkConfig(), "Recent transcript plus suggestion instructions")
-	if err != nil || answer != `{"prompt":"Add a regression test."}` || !strings.HasPrefix(string(started.SessionID), "background-") || !started.ReadOnly || !started.DisableNetwork {
+	if err != nil || answer != `{"prompt":"Add a regression test."}` || !strings.HasPrefix(string(started.SessionID), "background-") || !started.ReadOnly || !started.DisableNetwork || started.Model != "background-model" || started.Effort != "xhigh" {
 		t.Fatalf("fallback=%q config=%+v err=%v", answer, started, err)
 	}
 }

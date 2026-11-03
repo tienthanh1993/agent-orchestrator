@@ -78,6 +78,7 @@ import (
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/systemcheck"
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/systeminstall"
 	usagesvc "github.com/aoagents/agent-orchestrator/backend/internal/service/usage"
+	workflowsvc "github.com/aoagents/agent-orchestrator/backend/internal/service/workflow"
 	sessionmanager "github.com/aoagents/agent-orchestrator/backend/internal/session_manager"
 	"github.com/aoagents/agent-orchestrator/backend/internal/skillassets"
 	"github.com/aoagents/agent-orchestrator/backend/internal/storage/sqlite"
@@ -912,6 +913,9 @@ func Run(buildVersion string) error {
 	agentSvc.WarmCodexAccounts()
 	automationSvc, automationDone := startAutomations(ctx, store, sessionSvc, log)
 	lcStack.automationDone = automationDone
+	workflowSvc := workflowsvc.New(store, sessionSvc, chatSvc, cfg.DataDir)
+	workflowDone := startWorkflows(ctx, workflowSvc, log)
+	defer func() { stop(); <-workflowDone }()
 	autoReview := autoreview.New(store, reviewSvc, autoreview.Config{Logger: log})
 	lcStack.autoReviewDone = autoReview.Start(ctx)
 	// Push-device registry: persisted phones that receive OS push notifications.
@@ -1053,6 +1057,7 @@ func Run(buildVersion string) error {
 		ComputerUse:        computerUse,
 		Sessions:           sessionSvc,
 		Automations:        automationSvc,
+		Workflows:          workflowSvc,
 		DesktopWorkspaces:  sessionSvc,
 		PRs:                prActions,
 		Reviews:            reviewSvc,
@@ -1304,6 +1309,7 @@ func Run(buildVersion string) error {
 	// via defer) avoids the LIFO trap where a Stop() that blocks on ctx-cancel
 	// runs before the cancel: a non-signal exit path would hang otherwise.
 	stop()
+	<-workflowDone
 	if usageLimitResumeDone != nil {
 		<-usageLimitResumeDone
 	}

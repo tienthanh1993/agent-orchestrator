@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "@tanstack/react-router";
-import { Archive, CalendarClock, File, Folder, LayoutDashboard, Plus } from "lucide-react";
+import { Archive, CalendarClock, File, Folder, GitBranch, LayoutDashboard, Plus } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { NotificationCenter } from "./NotificationCenter";
 import { ProjectBoardActions } from "./ProjectBoardActions";
@@ -115,6 +115,7 @@ export function ShellTopbar({
 	const session = startingOrchestrator ? undefined : workspaceScope?.session;
 	const isSessionRoute = startingOrchestrator || Boolean(params.sessionId);
 	const isAutomationsRoute = location.pathname === "/automations";
+	const isWorkflowsRoute = location.pathname === "/workflows";
 	const isArtifactsRoute = location.pathname === "/artifacts";
 	const isStandaloneBoardRoute = location.pathname === "/sessions" || location.pathname === "/sessions/";
 	const isOrchestrator = startingOrchestrator || (session ? isOrchestratorSession(session) : false);
@@ -185,6 +186,8 @@ export function ShellTopbar({
 						<span aria-hidden="true" className="workspace-topbar__identity-separator" />
 						<SessionStatusPill session={session} />
 					</div>
+				) : isWorkflowsRoute ? (
+					<span className={cn(topbarProjectLabelClass, "inline-flex items-center gap-1.5")}><GitBranch aria-hidden="true" className="size-icon-md" />{t("workflows.title")}</span>
 				) : isAutomationsRoute ? (
 					<div className="inline-flex min-w-0 items-center gap-1.5" data-testid="automations-topbar-label">
 						<span className={cn(topbarProjectLabelClass, "inline-flex items-center gap-1.5")}>

@@ -34,6 +34,7 @@ type APIDeps struct {
 	Sessions           controllers.SessionService
 	ArtifactVersions   controllers.ArtifactVersionService
 	Automations        controllers.AutomationService
+	Workflows          controllers.WorkflowService
 	DesktopWorkspaces  controllers.DesktopWorkspaceService
 	Activity           controllers.ActivityRecorder
 	NativeSessions     ports.AgentNativeSessionResolver
@@ -137,6 +138,7 @@ type API struct {
 	projects      *controllers.ProjectsController
 	sessions      *controllers.SessionsController
 	automations   *controllers.AutomationsController
+	workflows     *controllers.WorkflowsController
 	desktop       *controllers.DesktopWorkspaceController
 	usage         *controllers.UsageController
 	prs           *controllers.PRsController
@@ -201,6 +203,7 @@ func newAPIWithLogger(cfg config.Config, deps APIDeps, log *slog.Logger) *API {
 			AgentBrowserToken:        cfg.AgentBrowserToken,
 		},
 		automations:   &controllers.AutomationsController{Svc: deps.Automations},
+		workflows:     &controllers.WorkflowsController{Svc: deps.Workflows},
 		desktop:       &controllers.DesktopWorkspaceController{Svc: deps.DesktopWorkspaces},
 		usage:         &controllers.UsageController{Svc: deps.UsageSummary, Log: loggerOrDefault(log), Memory: deps.SessionMemory, Steps: deps.SessionSteps, Pressure: memoryPressure(deps.SessionMemory)},
 		prs:           &controllers.PRsController{Svc: deps.PRs},
@@ -324,6 +327,7 @@ func (a *API) Register(root chi.Router) {
 			a.projects.Register(r)
 			a.sessions.Register(r)
 			a.automations.Register(r)
+			a.workflows.Register(r)
 			a.desktop.Register(r)
 			a.usage.Register(r)
 			a.prs.Register(r)

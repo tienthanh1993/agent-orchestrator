@@ -13115,6 +13115,309 @@ paths:
       summary: List resident memory of each live session's runtime process tree
       tags:
       - usage
+  /api/v1/workflow-runs/{runId}/actions:
+    post:
+      operationId: workflowRunAction
+      parameters:
+      - in: path
+        name: runId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowActionRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowRunEnvelope'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Implemented
+      summary: Approve or retry a stage
+      tags:
+      - workflows
+  /api/v1/workflows:
+    get:
+      operationId: listWorkflows
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowsResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Implemented
+      summary: List reusable workflows
+      tags:
+      - workflows
+    post:
+      operationId: createWorkflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveWorkflowRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowEnvelope'
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Implemented
+      summary: Create an artifact workflow
+      tags:
+      - workflows
+  /api/v1/workflows/{workflowId}:
+    put:
+      operationId: updateWorkflow
+      parameters:
+      - in: path
+        name: workflowId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveWorkflowRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowEnvelope'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Implemented
+      summary: Update a reusable workflow
+      tags:
+      - workflows
+  /api/v1/workflows/{workflowId}/runs:
+    get:
+      operationId: workflowRuns
+      parameters:
+      - in: path
+        name: workflowId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowRunsResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Implemented
+      summary: List workflow runs and artifacts
+      tags:
+      - workflows
+    post:
+      operationId: startWorkflow
+      parameters:
+      - in: path
+        name: workflowId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartWorkflowRequest'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowRunEnvelope'
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Implemented
+      summary: Run a workflow
+      tags:
+      - workflows
 components:
   schemas:
     APIError:
@@ -19495,6 +19798,35 @@ components:
       - path
       - name
       type: object
+    SaveWorkflowRequest:
+      properties:
+        enabled:
+          type: boolean
+        inputDefaults:
+          additionalProperties:
+            type: string
+          type: object
+        name:
+          type: string
+        projectId:
+          type: string
+        rrule:
+          type: string
+        stages:
+          items:
+            $ref: '#/components/schemas/WorkflowStage'
+          type: array
+        task:
+          type: string
+        timezone:
+          type: string
+      required:
+      - name
+      - projectId
+      - task
+      - stages
+      - enabled
+      type: object
     SendConversationMessageRequest:
       properties:
         attachments:
@@ -21452,6 +21784,13 @@ components:
       - sessionId
       - transition
       type: object
+    StartWorkflowRequest:
+      properties:
+        inputs:
+          additionalProperties:
+            type: string
+          type: object
+      type: object
     SteerConversationRequest:
       properties:
         attachments:
@@ -22077,6 +22416,200 @@ components:
           type: string
       required:
       - status
+      type: object
+    Workflow:
+      properties:
+        enabled:
+          type: boolean
+        id:
+          type: string
+        inputDefaults:
+          additionalProperties:
+            type: string
+          type: object
+        name:
+          type: string
+        nextRunAt:
+          format: date-time
+          type:
+          - "null"
+          - string
+        projectId:
+          type: string
+        rrule:
+          type: string
+        stages:
+          items:
+            $ref: '#/components/schemas/WorkflowStage'
+          type: array
+        task:
+          type: string
+        timezone:
+          type: string
+      required:
+      - id
+      - name
+      - projectId
+      - task
+      - stages
+      - enabled
+      type: object
+    WorkflowActionRequest:
+      properties:
+        action:
+          enum:
+          - approve
+          - retry
+          type: string
+        feedback:
+          type: string
+      required:
+      - action
+      type: object
+    WorkflowArtifactFile:
+      properties:
+        kind:
+          enum:
+          - html
+          - markdown
+          - file
+          type: string
+        name:
+          type: string
+        path:
+          type: string
+        size:
+          format: int64
+          type: integer
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - path
+      - name
+      - kind
+      - size
+      - updatedAt
+      type: object
+    WorkflowEnvelope:
+      properties:
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+      required:
+      - workflow
+      type: object
+    WorkflowRun:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        currentStage:
+          type: integer
+        definition:
+          $ref: '#/components/schemas/Workflow'
+        id:
+          type: string
+        inputs:
+          additionalProperties:
+            type: string
+          type: object
+        resolvedTask:
+          type:
+          - "null"
+          - string
+        scheduledFor:
+          format: date-time
+          type:
+          - "null"
+          - string
+        sessionId:
+          type: string
+        stages:
+          items:
+            $ref: '#/components/schemas/WorkflowStageRun'
+          type: array
+        status:
+          type: string
+        workflowId:
+          type: string
+      required:
+      - id
+      - workflowId
+      - definition
+      - status
+      - currentStage
+      - stages
+      - createdAt
+      type: object
+    WorkflowRunEnvelope:
+      properties:
+        run:
+          $ref: '#/components/schemas/WorkflowRun'
+      required:
+      - run
+      type: object
+    WorkflowRunsResponse:
+      properties:
+        runs:
+          items:
+            $ref: '#/components/schemas/WorkflowRun'
+          type: array
+      required:
+      - runs
+      type: object
+    WorkflowStage:
+      properties:
+        agent:
+          type: string
+        approval:
+          type: boolean
+        effort:
+          type: string
+        instructions:
+          type: string
+        model:
+          type: string
+        name:
+          type: string
+      required:
+      - name
+      - agent
+      - instructions
+      - approval
+      type: object
+    WorkflowStageRun:
+      properties:
+        artifactDir:
+          type: string
+        attempt:
+          type: integer
+        error:
+          type: string
+        feedback:
+          type: string
+        files:
+          items:
+            $ref: '#/components/schemas/WorkflowArtifactFile'
+          type: array
+        handoff:
+          type: string
+        status:
+          type: string
+        turnId:
+          type: string
+      required:
+      - status
+      - attempt
+      - files
+      type: object
+    WorkflowsResponse:
+      properties:
+        workflows:
+          items:
+            $ref: '#/components/schemas/Workflow'
+          type: array
+      required:
+      - workflows
       type: object
     WorkspaceBranchResponse:
       properties:

@@ -137,7 +137,7 @@ func testAsyncChatAnswersBeforeWorkspaceAndController(t *testing.T, kind domain.
 	}
 }
 
-func TestSpawnAsyncChatPreservesForegroundEffortDuringBackgroundTitle(t *testing.T) {
+func TestSpawnAsyncChatPreservesDefaultModelAndEffortDuringBackgroundTitle(t *testing.T) {
 	for _, prepared := range []bool{false, true} {
 		name := "fresh"
 		if prepared {
@@ -150,7 +150,7 @@ func TestSpawnAsyncChatPreservesForegroundEffortDuringBackgroundTitle(t *testing
 			m.browserCapabilities = browsersvc.NewAuthority()
 			deferred := deferredBackground(m)
 			project := st.projects[string(chatTestProject)]
-			project.Config.AgentConfig.Effort = "high"
+			project.Config.AgentConfig.Model, project.Config.AgentConfig.Effort = "default-model", "high"
 			st.projects[string(chatTestProject)] = project
 
 			cfg := asyncChatSpawnConfig("do the thing")
@@ -166,17 +166,17 @@ func TestSpawnAsyncChatPreservesForegroundEffortDuringBackgroundTitle(t *testing
 			if err != nil {
 				t.Fatal(err)
 			}
-			if rec.Metadata.Effort != "high" {
-				t.Fatalf("effort before controller start = %q, want high", rec.Metadata.Effort)
+			if rec.Metadata.Model != "default-model" || rec.Metadata.Effort != "high" {
+				t.Fatalf("model/effort before controller start = %q/%q, want default-model/high", rec.Metadata.Model, rec.Metadata.Effort)
 			}
 			if _, err := m.RunBackgroundTask(context.Background(), rec.ID, "title only", "do the thing"); err != nil {
 				t.Fatal(err)
 			}
-			if len(launcher.background) != 1 || launcher.background[0].Effort != "" {
-				t.Fatalf("background title task = %#v, want provider-advertised effort", launcher.background)
+			if len(launcher.background) != 1 || launcher.background[0].Model != "default-model" || launcher.background[0].Effort != "high" {
+				t.Fatalf("background title task = %#v, want configured default model/effort", launcher.background)
 			}
-			if st.sessions[rec.ID].Metadata.Effort != "high" {
-				t.Fatal("background task changed the foreground effort")
+			if st.sessions[rec.ID].Metadata.Model != "default-model" || st.sessions[rec.ID].Metadata.Effort != "high" {
+				t.Fatal("background task changed the foreground model/effort")
 			}
 		})
 	}

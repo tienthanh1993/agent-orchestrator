@@ -49,14 +49,14 @@ func TestTaskNamingAllShippedAgents(t *testing.T) {
 			m.runBackground = func(work func()) { work() }
 			cfg := asyncChatSpawnConfig("Fix login redirect")
 			cfg.Harness, cfg.NameFromPrompt, cfg.AgentConfigResolved = agent.Harness, true, true
-			cfg.AgentConfig.Model = "selected-model"
+			cfg.AgentConfig.Model, cfg.AgentConfig.Effort = "selected-model", "xhigh"
 			wait, stop := m.startTaskNaming(cfg, domain.SessionRecord{ID: "mer-1", Harness: agent.Harness}, st.projects["mer"].Config)
 			defer stop()
 			if got := wait(); got.Slug != want {
 				t.Fatalf("name = %+v, want %q", got, want)
 			}
-			if len(launcher.backgroundHarnesses) != 1 || launcher.backgroundHarnesses[0] != agent.Harness || launcher.background[0].Model != "selected-model" {
-				t.Fatalf("selected agent/model not preserved: %v, %+v", launcher.backgroundHarnesses, launcher.background)
+			if len(launcher.backgroundHarnesses) != 1 || launcher.backgroundHarnesses[0] != agent.Harness || launcher.background[0].Model != "selected-model" || launcher.background[0].Effort != "xhigh" {
+				t.Fatalf("selected agent/model/effort not preserved: %v, %+v", launcher.backgroundHarnesses, launcher.background)
 			}
 		})
 	}

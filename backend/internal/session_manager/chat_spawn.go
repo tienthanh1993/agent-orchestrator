@@ -105,8 +105,6 @@ func (m *Manager) runBackgroundTask(ctx context.Context, id domain.SessionID, sy
 	if rec.IsTerminated {
 		return "", fmt.Errorf("session %s is terminated", id)
 	}
-	// Existing background titles and suggestions use the provider's default effort.
-	rec.Metadata.Effort = ""
 	return m.runRecordBackgroundTask(ctx, rec, systemPrompt, prompt, run)
 }
 

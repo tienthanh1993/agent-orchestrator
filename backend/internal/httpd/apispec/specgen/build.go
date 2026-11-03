@@ -159,6 +159,20 @@ func schemaName(_ reflect.Type, defaultName string) string {
 // by projectOperations(). Add an entry when a new contract type is introduced;
 // the drift test fails until the spec is regenerated, which flags the gap.
 var schemaNames = map[string]string{ //nolint:gosec // Public OpenAPI type names include reset-credit contracts; no credential value is stored here.
+	"ControllersWorkflowIDParam":                           "WorkflowIDParam",
+	"ControllersWorkflowRunIDParam":                        "WorkflowRunIDParam",
+	"ControllersSaveWorkflowRequest":                       "SaveWorkflowRequest",
+	"ControllersStartWorkflowRequest":                      "StartWorkflowRequest",
+	"ControllersWorkflowActionRequest":                     "WorkflowActionRequest",
+	"ControllersWorkflowEnvelope":                          "WorkflowEnvelope",
+	"ControllersWorkflowsResponse":                         "WorkflowsResponse",
+	"ControllersWorkflowRunEnvelope":                       "WorkflowRunEnvelope",
+	"ControllersWorkflowRunsResponse":                      "WorkflowRunsResponse",
+	"DomainWorkflow":                                       "Workflow",
+	"DomainWorkflowStage":                                  "WorkflowStage",
+	"DomainWorkflowRun":                                    "WorkflowRun",
+	"DomainWorkflowStageRun":                               "WorkflowStageRun",
+	"DomainSessionArtifactFile":                            "WorkflowArtifactFile",
 	"ControllersTelemetryIdentityResponse":                 "TelemetryIdentityResponse",
 	"ControllersAgentAccountIDParam":                       "AgentAccountIDParam",
 	"ControllersAgentAccountLoginIDParam":                  "AgentAccountLoginIDParam",
@@ -751,6 +765,7 @@ func operations() []operation {
 	ops = append(ops, projectOperations()...)
 	ops = append(ops, sessionOperations()...)
 	ops = append(ops, automationOperations()...)
+	ops = append(ops, workflowOperations()...)
 	ops = append(ops, prOperations()...)
 	ops = append(ops, reviewOperations()...)
 	ops = append(ops, notificationOperations()...)

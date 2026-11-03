@@ -946,6 +946,19 @@ type UsageSource struct {
 	UpdatedAt       time.Time
 }
 
+type Workflow struct {
+	ID   string
+	Body string
+}
+
+type WorkflowRun struct {
+	ID         string
+	WorkflowID string
+	Occurrence string
+	Status     string
+	Body       string
+}
+
 type WorkspaceRepo struct {
 	ProjectID     domain.ProjectID
 	Name          string

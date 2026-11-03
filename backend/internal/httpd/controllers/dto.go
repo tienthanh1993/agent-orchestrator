@@ -2174,6 +2174,59 @@ type StartInstallResponse = systeminstall.Job
 // InstallStatusResponse is the body of GET /api/v1/system/install/{target}.
 type InstallStatusResponse = systeminstall.Job
 
+// WorkflowIDParam identifies a reusable workflow definition.
+type WorkflowIDParam struct {
+	WorkflowID string `path:"workflowId"`
+}
+
+// WorkflowRunIDParam identifies one execution of a workflow.
+type WorkflowRunIDParam struct {
+	RunID string `path:"runId"`
+}
+
+// SaveWorkflowRequest configures a workflow and its sequential stages.
+type SaveWorkflowRequest struct {
+	InputDefaults map[string]string      `json:"inputDefaults,omitempty"`
+	Name          string                 `json:"name"`
+	ProjectID     domain.ProjectID       `json:"projectId"`
+	Task          string                 `json:"task"`
+	Stages        []domain.WorkflowStage `json:"stages"`
+	RRule         string                 `json:"rrule,omitempty"`
+	Timezone      string                 `json:"timezone,omitempty"`
+	Enabled       bool                   `json:"enabled"`
+}
+
+// StartWorkflowRequest supplies this run's master-prompt inputs.
+type StartWorkflowRequest struct {
+	Inputs map[string]string `json:"inputs,omitempty"`
+}
+
+// WorkflowActionRequest approves a checkpoint or retries a failed stage.
+type WorkflowActionRequest struct {
+	Action   string `json:"action" enum:"approve,retry"`
+	Feedback string `json:"feedback,omitempty"`
+}
+
+// WorkflowEnvelope wraps a saved workflow definition.
+type WorkflowEnvelope struct {
+	Workflow domain.Workflow `json:"workflow"`
+}
+
+// WorkflowsResponse lists reusable workflow definitions.
+type WorkflowsResponse struct {
+	Workflows []domain.Workflow `json:"workflows"`
+}
+
+// WorkflowRunEnvelope wraps one workflow execution.
+type WorkflowRunEnvelope struct {
+	Run domain.WorkflowRun `json:"run"`
+}
+
+// WorkflowRunsResponse lists workflow executions.
+type WorkflowRunsResponse struct {
+	Runs []domain.WorkflowRun `json:"runs"`
+}
+
 // AutomationIDParam identifies a recurring definition.
 type AutomationIDParam struct {
 	AutomationID string `path:"automationId" description:"Automation identifier."`

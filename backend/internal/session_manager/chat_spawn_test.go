@@ -276,7 +276,7 @@ func TestRunBackgroundTaskUsesResolvedWorkerHarnessAndConfig(t *testing.T) {
 	}
 	task := launcher.background[0]
 	if launcher.backgroundHarnesses[0] != rec.Harness || task.WorkspacePath == rec.Metadata.WorkspacePath ||
-		task.Model != rec.Metadata.Model || task.Effort != "" || task.Permissions != ports.PermissionModeAcceptEdits {
+		task.Model != rec.Metadata.Model || task.Effort != rec.Metadata.Effort || task.Permissions != ports.PermissionModeAcceptEdits {
 		t.Fatalf("background task = %#v", task)
 	}
 	if _, err := os.Stat(task.WorkspacePath); !errors.Is(err, os.ErrNotExist) {
@@ -2000,14 +2000,14 @@ func TestRunPromptSuggestionTaskPassesForkSourceWithScratchPolicy(t *testing.T) 
 	launcher := &suggestionRecordingLauncher{recordingLauncher: &recordingLauncher{}}
 	m, st, _ := newChatManager(launcher)
 	m.dataDir = t.TempDir()
-	rec := domain.SessionRecord{ID: "mer-1", ProjectID: chatTestProject, Kind: domain.KindWorker, Harness: domain.HarnessClaudeCode, Metadata: domain.SessionMetadata{WorkspacePath: "/foreground", Model: "selected-model", Permissions: ports.PermissionModeAuto}}
+	rec := domain.SessionRecord{ID: "mer-1", ProjectID: chatTestProject, Kind: domain.KindWorker, Harness: domain.HarnessClaudeCode, Metadata: domain.SessionMetadata{WorkspacePath: "/foreground", Model: "selected-model", Effort: "xhigh", Permissions: ports.PermissionModeAuto}}
 	st.sessions[rec.ID] = rec
 	got, err := m.RunPromptSuggestionTask(t.Context(), rec.ID, "completed-turn", "suggestion only", "Suggest next message")
 	if err != nil || got != "Generated title" || launcher.source != rec.ID || launcher.turn != "completed-turn" || len(launcher.background) != 1 {
 		t.Fatalf("source=%q turn=%q result=%q err=%v", launcher.source, launcher.turn, got, err)
 	}
 	cfg := launcher.background[0]
-	if launcher.backgroundHarnesses[0] != rec.Harness || cfg.WorkspacePath == rec.Metadata.WorkspacePath || cfg.Model != rec.Metadata.Model || cfg.Permissions != ports.PermissionModeAcceptEdits || cfg.SystemPrompt != "suggestion only" {
+	if launcher.backgroundHarnesses[0] != rec.Harness || cfg.WorkspacePath == rec.Metadata.WorkspacePath || cfg.Model != rec.Metadata.Model || cfg.Effort != rec.Metadata.Effort || cfg.Permissions != ports.PermissionModeAcceptEdits || cfg.SystemPrompt != "suggestion only" {
 		t.Fatalf("suggestion config=%+v", cfg)
 	}
 	if _, ok := cfg.Env[EnvSessionID]; ok {

@@ -3,7 +3,6 @@ package chat_test
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strings"
 	"testing"
 
@@ -55,7 +54,7 @@ func TestRunBackgroundTaskUsesNativeDriverAndTerminatesIt(t *testing.T) {
 	if started.SessionID != "background-task-id" || started.ProviderScopeID != "scope-id" || !started.ProviderIDsScoped || !started.Ephemeral || !started.ReadOnly || !started.DisableNetwork {
 		t.Fatalf("start identity = %#v", started)
 	}
-	if started.Model != "small" || started.Effort != "" || started.Env["CODEX_HOME"] != "/account" {
+	if started.Model != "small" || started.Effort != "low" || started.Env["CODEX_HOME"] != "/account" {
 		t.Fatalf("start config = %#v", started)
 	}
 	if !started.DisableTools || started.SystemPrompt != "title only" {
@@ -104,33 +103,37 @@ func (c *backgroundModelConversation) ListModels(context.Context) ([]ports.ChatM
 	return c.models, nil
 }
 
-func TestRunBackgroundTaskUsesLowestEffortOfferedByActiveModel(t *testing.T) {
+func TestRunBackgroundTaskPreservesConfiguredModelAndEffort(t *testing.T) {
 	for _, tt := range []struct {
-		name    string
-		efforts []string
-		want    string
+		name   string
+		model  string
+		effort string
 	}{
-		{"low offered", []string{"xhigh", "low", "high"}, "low"},
-		{"low unsupported", []string{"high", "medium"}, "medium"},
-		{"no reasoning", nil, ""},
-		{"unknown vocabulary", []string{"adaptive"}, ""},
+		{"Astra xhigh", "gpt-6-astra", "xhigh"},
+		{"configured effort", "selected-model", "high"},
+		{"provider effort default", "selected-model", ""},
+		{"provider model default", "", "xhigh"},
+		{"provider defaults", "", ""},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			conversation := &backgroundModelConversation{
 				backgroundTestConversation: &backgroundTestConversation{terminatingConversation: &terminatingConversation{fakeConversation: newFakeConversation()}},
 				models: []ports.ChatModel{
-					{ID: "other-model", Efforts: []string{"none"}},
-					{ID: "selected-model", Default: true, Efforts: tt.efforts},
+					{ID: "provider-default", Default: true, Efforts: []string{"low", "high", "xhigh"}, DefaultEffort: "high"},
+					{ID: "gpt-6-astra", Efforts: []string{"low", "high", "xhigh"}},
 				},
 			}
 			var started ports.ChatStartConfig
 			service := chatsvc.New(chatsvc.Options{Drivers: fakeRegistry{driver: fakeDriver{conv: conversation, startCfg: &started}}, NewID: func() string { return "id" }})
-			if _, err := service.RunBackgroundTask(context.Background(), domain.HarnessCodex, ports.ChatStartConfig{Model: "selected-model", Effort: "xhigh"}, "Write a short title"); err != nil {
+			if _, err := service.RunBackgroundTask(context.Background(), domain.HarnessCodex, ports.ChatStartConfig{Model: tt.model, Effort: tt.effort}, "Write a short title"); err != nil {
 				t.Fatal(err)
 			}
 			message := conversation.sentMessages()[0]
-			if started.Model != "selected-model" || started.Effort != "" || message.Settings.Model != "" || message.Settings.Effort != tt.want {
-				t.Fatalf("start model/effort = %q/%q, turn settings = %#v, want effort %q", started.Model, started.Effort, message.Settings, tt.want)
+			if started.Model != tt.model || started.Effort != tt.effort {
+				t.Fatalf("start model/effort = %q/%q, want %q/%q", started.Model, started.Effort, tt.model, tt.effort)
+			}
+			if !message.Settings.IsZero() {
+				t.Fatalf("background turn overrides configured defaults: %#v", message.Settings)
 			}
 		})
 	}
@@ -141,7 +144,6 @@ type backgroundConfigConversation struct {
 	options  []ports.ChatConfigOption
 	setID    string
 	setValue ports.ChatConfigOptionValue
-	setErr   error
 }
 
 func (c *backgroundConfigConversation) ListConfigOptions(context.Context) ([]ports.ChatConfigOption, error) {
@@ -150,53 +152,39 @@ func (c *backgroundConfigConversation) ListConfigOptions(context.Context) ([]por
 
 func (c *backgroundConfigConversation) SetConfigOption(_ context.Context, id string, value ports.ChatConfigOptionValue) ([]ports.ChatConfigOption, error) {
 	c.setID, c.setValue = id, value
-	return c.options, c.setErr
+	return c.options, nil
 }
 
-func TestRunBackgroundTaskUsesAdvertisedNativeEffort(t *testing.T) {
+func TestRunBackgroundTaskPreservesNativeConfiguration(t *testing.T) {
 	for _, tt := range []struct {
 		name  string
 		value string
-		want  string
 	}{
-		{"native value preserved", "OFF", "OFF"},
-		{"unknown value unchanged", "adaptive", ""},
+		{"configured effort", "high"},
+		{"native value preserved", "OFF"},
+		{"unknown value unchanged", "adaptive"},
+		{"provider default", ""},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			conversation := &backgroundConfigConversation{
 				backgroundTestConversation: &backgroundTestConversation{terminatingConversation: &terminatingConversation{fakeConversation: newFakeConversation()}},
 				options: []ports.ChatConfigOption{
-					{ID: "provider-model", Category: "model", Type: ports.ChatConfigOptionSelect, Choices: []ports.ChatConfigOptionChoice{{Value: "low"}}},
-					{ID: "native-reasoning", Category: "thought_level", Type: ports.ChatConfigOptionSelect, Current: ports.ChatConfigOptionValue{Select: "high"}, Choices: []ports.ChatConfigOptionChoice{{Value: tt.value}}},
+					{ID: "provider-model", Category: "model", Type: ports.ChatConfigOptionSelect, Current: ports.ChatConfigOptionValue{Select: "selected-model"}, Choices: []ports.ChatConfigOptionChoice{{Value: "selected-model"}}},
+					{ID: "native-reasoning", Category: "thought_level", Type: ports.ChatConfigOptionSelect, Current: ports.ChatConfigOptionValue{Select: "high"}, Choices: []ports.ChatConfigOptionChoice{{Value: "low"}, {Value: "high"}}},
 				},
 			}
-			service := chatsvc.New(chatsvc.Options{Drivers: fakeRegistry{driver: fakeDriver{conv: conversation}}, NewID: func() string { return "id" }})
-			if _, err := service.RunBackgroundTask(context.Background(), domain.HarnessDeepSeek, ports.ChatStartConfig{}, "Write a short title"); err != nil {
+			var started ports.ChatStartConfig
+			service := chatsvc.New(chatsvc.Options{Drivers: fakeRegistry{driver: fakeDriver{conv: conversation, startCfg: &started}}, NewID: func() string { return "id" }})
+			if _, err := service.RunBackgroundTask(context.Background(), domain.HarnessDeepSeek, ports.ChatStartConfig{Model: "selected-model", Effort: tt.value}, "Write a short title"); err != nil {
 				t.Fatal(err)
 			}
-			if conversation.setValue.Select != tt.want || (tt.want != "" && conversation.setID != "native-reasoning") {
-				t.Fatalf("native option = %q/%#v, want effort %q", conversation.setID, conversation.setValue, tt.want)
+			if started.Model != "selected-model" || started.Effort != tt.value {
+				t.Fatalf("start model/effort = %q/%q, want selected-model/%q", started.Model, started.Effort, tt.value)
 			}
-			if conversation.sentMessages()[0].Settings.Effort != "" {
-				t.Fatal("native effort was remapped through a different turn setting")
+			if conversation.setID != "" || !conversation.sentMessages()[0].Settings.IsZero() {
+				t.Fatalf("native configuration was overridden: %q/%#v", conversation.setID, conversation.setValue)
 			}
 		})
-	}
-}
-
-func TestRunBackgroundTaskStopsBeforeGenerationIfEffortCannotBeSet(t *testing.T) {
-	wantErr := errors.New("provider rejected its advertised effort")
-	conversation := &backgroundConfigConversation{
-		backgroundTestConversation: &backgroundTestConversation{terminatingConversation: &terminatingConversation{fakeConversation: newFakeConversation()}},
-		options:                    []ports.ChatConfigOption{{ID: "effort", Category: "thought_level", Type: ports.ChatConfigOptionSelect, Choices: []ports.ChatConfigOptionChoice{{Value: "low"}}}},
-		setErr:                     wantErr,
-	}
-	service := chatsvc.New(chatsvc.Options{Drivers: fakeRegistry{driver: fakeDriver{conv: conversation}}, NewID: func() string { return "id" }})
-	if _, err := service.RunBackgroundTask(context.Background(), domain.HarnessClaudeCode, ports.ChatStartConfig{}, "Write a short title"); !errors.Is(err, wantErr) {
-		t.Fatalf("error = %v, want %v", err, wantErr)
-	}
-	if len(conversation.sentMessages()) != 0 || !conversation.terminated.Load() {
-		t.Fatal("background generation started or provider was left running")
 	}
 }
 
